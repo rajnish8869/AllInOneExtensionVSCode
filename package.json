@@ -1,0 +1,59 @@
+{
+  "name": "remove-comments",
+  "displayName": "Remove Comments",
+  "description": "A VS Code extension to remove all single-line and multi-line comments from code and minify it.",
+  "version": "0.0.1",
+  "publisher": "Rajnish Kumar Singh", 
+  "engines": {
+    "vscode": "^1.56.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:remove-comments.removeAllComments",
+    "onCommand:remove-comments.minifyFile",
+    "onCommand:remove-comments.consoleLogSelection"
+  ],
+  "main": "./out/extension.js",
+  "icon": "logo.png",
+  "contributes": {
+    "commands": [
+      {
+        "command": "remove-comments.removeAllComments",
+        "title": "Remove All Comments"
+      },
+      {
+        "command": "remove-comments.minifyFile",
+        "title": "Minify File"
+      },
+      {
+        "command": "remove-comments.consoleLogSelection",
+        "title": "Console Log Selection"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "remove-comments.consoleLogSelection",
+        "key": "ctrl+shift+g",
+        "when": "editorTextFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.56.0",
+    "@typescript-eslint/eslint-plugin": "^4.0.0",
+    "@typescript-eslint/parser": "^4.0.0",
+    "eslint": "^7.0.0",
+    "typescript": "^4.0.0",
+    "vscode-test": "^1.0.0"
+  }
+}
