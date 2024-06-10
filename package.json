@@ -3,7 +3,7 @@
   "displayName": "Remove Comments",
   "description": "A VS Code extension to remove all single-line and multi-line comments from code and minify it.",
   "version": "0.0.1",
-  "publisher": "Rajnish Kumar Singh", 
+  "publisher": "Rajnish Kumar Singh",
   "engines": {
     "vscode": "^1.56.0"
   },
@@ -21,15 +21,15 @@
     "commands": [
       {
         "command": "remove-comments.removeAllComments",
-        "title": "Remove All Comments"
+        "title": "Remove All Comments ©"
       },
       {
         "command": "remove-comments.minifyFile",
-        "title": "Minify File"
+        "title": "Minify File ©"
       },
       {
         "command": "remove-comments.consoleLogSelection",
-        "title": "Console Log Selection"
+        "title": "Console Log Selection ©"
       }
     ],
     "keybindings": [
