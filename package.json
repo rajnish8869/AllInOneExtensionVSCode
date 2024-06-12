@@ -13,7 +13,8 @@
   "activationEvents": [
     "onCommand:remove-comments.removeAllComments",
     "onCommand:remove-comments.minifyFile",
-    "onCommand:remove-comments.consoleLogSelection"
+    "onCommand:remove-comments.consoleLogSelection",
+    "onCommand:remove-comments.removeCommentsFromSelection"
   ],
   "main": "./out/extension.js",
   "icon": "logo.png",
@@ -30,12 +31,21 @@
       {
         "command": "remove-comments.consoleLogSelection",
         "title": "Console Log Selection ©"
+      },
+      {
+        "command": "remove-comments.removeCommentsFromSelection",
+        "title": "Remove Comments from Selection ©"
       }
     ],
     "keybindings": [
       {
         "command": "remove-comments.consoleLogSelection",
-        "key": "ctrl+shift+g",
+        "key": "ctrl+shift+a",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "remove-comments.removeCommentsFromSelection",
+        "key": "ctrl+shift+j",
         "when": "editorTextFocus"
       }
     ]

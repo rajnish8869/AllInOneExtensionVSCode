@@ -1,7 +1,30 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deactivate = exports.activate = void 0;
-const vscode = require("vscode");
+const vscode = __importStar(require("vscode"));
 function activate(context) {
     // Command to remove all comments and minify
     let removeCommentsAndMinifyDisposable = vscode.commands.registerCommand("remove-comments.removeAllComments", () => {
@@ -11,7 +34,7 @@ function activate(context) {
             const fullText = document.getText();
             // Regular expressions to match single-line and multi-line comments
             const singleLineComment = /\/\/.*$/gm;
-            const multiLineComment = /\/\*[\s\S]*?\*\//gm;
+            const multiLineComment = /\/\*[^]*?\*\//gm;
             // Remove comments
             let textWithoutComments = fullText
                 .replace(singleLineComment, "")
@@ -31,7 +54,7 @@ function activate(context) {
             const fullText = document.getText();
             // Regular expressions to match single-line and multi-line comments
             const singleLineComment = /\/\/.*$/gm;
-            const multiLineComment = /\/\*[\s\S]*?\*\//gm;
+            const multiLineComment = /\/\*[^]*?\*\//gm;
             // Remove comments
             let textWithoutComments = fullText
                 .replace(singleLineComment, "")
@@ -73,11 +96,35 @@ function activate(context) {
             }
         }
     });
+    // Command to remove comments from the selected text
+    let removeCommentsFromSelectionDisposable = vscode.commands.registerCommand("remove-comments.removeCommentsFromSelection", () => {
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            const document = editor.document;
+            const selection = editor.selection;
+            const selectedText = document.getText(selection);
+            if (selectedText) {
+                // Regular expressions to match single-line and multi-line comments
+                const singleLineComment = /\/\/.*$/gm;
+                const multiLineComment = /\/\*[^]*?\*\//gm;
+                // Remove comments from the selected text
+                let textWithoutComments = selectedText
+                    .replace(singleLineComment, "")
+                    .replace(multiLineComment, "");
+                editor.edit((editBuilder) => {
+                    editBuilder.replace(selection, textWithoutComments);
+                });
+            }
+            else {
+                vscode.window.showInformationMessage("No text selected");
+            }
+        }
+    });
     context.subscriptions.push(removeCommentsAndMinifyDisposable);
     context.subscriptions.push(minifyDisposable);
     context.subscriptions.push(consoleLogDisposable);
+    context.subscriptions.push(removeCommentsFromSelectionDisposable);
 }
 exports.activate = activate;
 function deactivate() { }
 exports.deactivate = deactivate;
-//# sourceMappingURL=extension.js.map

@@ -13,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         // Regular expressions to match single-line and multi-line comments
         const singleLineComment = /\/\/.*$/gm;
-        const multiLineComment = /\/\*[\s\S]*?\*\//gm;
+        const multiLineComment = /\/\*[^]*?\*\//gm;
 
         // Remove comments
         let textWithoutComments = fullText
@@ -45,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         // Regular expressions to match single-line and multi-line comments
         const singleLineComment = /\/\/.*$/gm;
-        const multiLineComment = /\/\*[\s\S]*?\*\//gm;
+        const multiLineComment = /\/\*[^]*?\*\//gm;
 
         // Remove comments
         let textWithoutComments = fullText
@@ -102,9 +102,41 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  // Command to remove comments from the selected text
+  let removeCommentsFromSelectionDisposable = vscode.commands.registerCommand(
+    "remove-comments.removeCommentsFromSelection",
+    () => {
+      const editor = vscode.window.activeTextEditor;
+
+      if (editor) {
+        const document = editor.document;
+        const selection = editor.selection;
+        const selectedText = document.getText(selection);
+
+        if (selectedText) {
+          // Regular expressions to match single-line and multi-line comments
+          const singleLineComment = /\/\/.*$/gm;
+          const multiLineComment = /\/\*[^]*?\*\//gm;
+
+          // Remove comments from the selected text
+          let textWithoutComments = selectedText
+            .replace(singleLineComment, "")
+            .replace(multiLineComment, "");
+
+          editor.edit((editBuilder) => {
+            editBuilder.replace(selection, textWithoutComments);
+          });
+        } else {
+          vscode.window.showInformationMessage("No text selected");
+        }
+      }
+    }
+  );
+
   context.subscriptions.push(removeCommentsAndMinifyDisposable);
   context.subscriptions.push(minifyDisposable);
   context.subscriptions.push(consoleLogDisposable);
+  context.subscriptions.push(removeCommentsFromSelectionDisposable);
 }
 
 export function deactivate() {}
