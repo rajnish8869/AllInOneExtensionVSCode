@@ -1,0 +1,1 @@
+This `README.md` file includes the key features, installation instructions, usage details with examples, and information about contributing and the license. This should help users understand how to use your VS Code extension effectively.

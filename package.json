@@ -18,6 +18,10 @@
   ],
   "main": "./out/extension.js",
   "icon": "logo.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rajnish8869/AllInOneExtensionVSCode.git"
+  },
   "contributes": {
     "commands": [
       {

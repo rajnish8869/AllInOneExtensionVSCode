@@ -12,8 +12,9 @@ export function activate(context: vscode.ExtensionContext) {
         const fullText = document.getText();
 
         // Regular expressions to match single-line and multi-line comments
-        const singleLineComment = /\/\/.*$/gm;
-        const multiLineComment = /\/\*[^]*?\*\//gm;
+        const singleLineComment = /(?<!http:|https:)\/\/.*$/gm;
+
+        const multiLineComment = /\/\*[\s\S]*?\*\//gm;
 
         // Remove comments
         let textWithoutComments = fullText
@@ -44,8 +45,8 @@ export function activate(context: vscode.ExtensionContext) {
         const fullText = document.getText();
 
         // Regular expressions to match single-line and multi-line comments
-        const singleLineComment = /\/\/.*$/gm;
-        const multiLineComment = /\/\*[^]*?\*\//gm;
+        const singleLineComment = /(?<!http:|https:)\/\/.*$/gm;
+        const multiLineComment = /\/\*[\s\S]*?\*\//gm;
 
         // Remove comments
         let textWithoutComments = fullText
@@ -115,8 +116,8 @@ export function activate(context: vscode.ExtensionContext) {
 
         if (selectedText) {
           // Regular expressions to match single-line and multi-line comments
-          const singleLineComment = /\/\/.*$/gm;
-          const multiLineComment = /\/\*[^]*?\*\//gm;
+          const singleLineComment = /(?<!http:|https:)\/\/.*$/gm;
+          const multiLineComment = /\/\*[\s\S]*?\*\//gm;
 
           // Remove comments from the selected text
           let textWithoutComments = selectedText
