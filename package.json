@@ -14,7 +14,9 @@
     "onCommand:remove-comments.removeAllComments",
     "onCommand:remove-comments.minifyFile",
     "onCommand:remove-comments.consoleLogSelection",
-    "onCommand:remove-comments.removeCommentsFromSelection"
+    "onCommand:remove-comments.removeCommentsFromSelection",
+    "onCommand:remove-comments.removeCommentsFromAllFiles",
+    "onCommand:remove-comments.showQuickPick"
   ],
   "main": "./out/extension.js",
   "icon": "logo.png",
@@ -39,6 +41,14 @@
       {
         "command": "remove-comments.removeCommentsFromSelection",
         "title": "Remove Comments from Selection ©"
+      },
+      {
+        "command": "remove-comments.removeCommentsFromAllFiles",
+        "title": "Remove Comments from All Files ©"
+      },
+      {
+        "command": "remove-comments.showQuickPick",
+        "title": "Show Quick Pick Menu ©"
       }
     ],
     "keybindings": [
