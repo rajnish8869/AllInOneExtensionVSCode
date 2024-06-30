@@ -16,7 +16,8 @@
     "onCommand:remove-comments.consoleLogSelection",
     "onCommand:remove-comments.removeCommentsFromSelection",
     "onCommand:remove-comments.removeCommentsFromAllFiles",
-    "onCommand:remove-comments.showQuickPick"
+    "onCommand:remove-comments.showQuickPick",
+    "onCommand:extension.convertStyle"
   ],
   "main": "./out/extension.js",
   "icon": "logo.png",
@@ -49,6 +50,10 @@
       {
         "command": "remove-comments.showQuickPick",
         "title": "Show Quick Pick Menu ©"
+      },
+      {
+        "command": "extension.convertStyle",
+        "title": "Convert Style to CSS ©"
       }
     ],
     "keybindings": [

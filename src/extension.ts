@@ -1,58 +1,117 @@
 import * as vscode from "vscode";
 
+const convertStyleToCSS = (styleObj: any) => {
+  const entries = Object.entries(styleObj).map(([key, value]) => {
+    const kebabKey = key.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
+    const cssValue =
+      typeof value === "string" ? value.replace(/^'|'$/g, "") : value;
+    return `${kebabKey}: ${cssValue};`;
+  });
+  return entries.join("\n  ");
+};
+
+const cleanInput = (input: string) => {
+  return input.replace(/\{([^}]*)\}/g, (match, content) => {
+    const cleanedContent = content
+      .split("\n")
+      .map((line: string) => line.trim())
+      .filter((line: string) => line !== "")
+      .join("\n  ");
+    return `{${cleanedContent}}`;
+  });
+};
+
+const preprocessInput = (input: string) => {
+  const blocks = input
+    .split(/\n\n+/)
+    .map((block: string) => block.trim())
+    .filter((block: string) => block);
+  return blocks.map((block: string) => {
+    let wrap = false;
+    let className = "";
+
+    if (block.match(/^\.?[a-zA-Z0-9_-]+\s*{[^}]+}$/)) {
+      const matches = block.match(/^\.?([a-zA-Z0-9_-]+)\s*{([^}]+)}$/);
+      if (matches) {
+        className = matches[1] ? `.${matches[1]}` : "";
+        block = matches[2].trim();
+      }
+    } else if (block.startsWith("{") && block.endsWith("}")) {
+      wrap = true;
+      block = block.slice(1, -1).trim();
+    }
+
+    try {
+      const jsonInput = JSON.parse(
+        `{${block.replace(/([a-zA-Z0-9]+)\s*:/g, '"$1":').replace(/'/g, '"')}}`
+      );
+      return { styleObj: jsonInput, wrap, className };
+    } catch (error) {
+      throw new Error(
+        "Invalid input format. Please ensure your input is correctly formatted."
+      );
+    }
+  });
+};
+
+const formatCode = (code: string) => {
+  const lines = code.split("\n").map((line: string) => line.trim());
+  const formattedLines = lines.map((line: string) => {
+    if (line.startsWith("{") || line.startsWith("}")) {
+      return line;
+    }
+    const [key, value] = line.split(":");
+    if (key && value) {
+      return `${key.trim()}: ${value.trim()}`;
+    }
+    return line;
+  });
+  return formattedLines.join("\n");
+};
+
 export function activate(context: vscode.ExtensionContext) {
-  // Command to remove all comments and minify
+  // Existing commands
   let removeCommentsAndMinifyDisposable = vscode.commands.registerCommand(
     "remove-comments.removeAllComments",
     () => {
       const editor = vscode.window.activeTextEditor;
-
       if (editor) {
         const document = editor.document;
         const fullText = document.getText();
 
-        // Regular expressions to match single-line and multi-line comments
         const singleLineComment = /(?<!http:|https:)\/\/.*$/gm;
         const multiLineComment = /\/\*[\s\S]*?\*\//gm;
 
-        // Remove comments
         let textWithoutComments = fullText
           .replace(singleLineComment, "")
           .replace(multiLineComment, "");
 
-        // Apply the changes to the editor
         const edit = new vscode.WorkspaceEdit();
         const fullRange = new vscode.Range(
           document.positionAt(0),
           document.positionAt(fullText.length)
         );
         edit.replace(document.uri, fullRange, textWithoutComments);
-
         vscode.workspace.applyEdit(edit);
       }
     }
   );
 
-  // Command to minify without removing comments
   let minifyDisposable = vscode.commands.registerCommand(
     "remove-comments.minifyFile",
     () => {
       const editor = vscode.window.activeTextEditor;
-
       if (editor) {
         const document = editor.document;
         const fullText = document.getText();
 
-        // Regular expressions to match single-line and multi-line comments
         const singleLineComment = /(?<!http:|https:)\/\/.*$/gm;
         const multiLineComment = /\/\*[\s\S]*?\*\//gm;
 
-        // Remove comments
         let textWithoutComments = fullText
           .replace(singleLineComment, "")
           .replace(multiLineComment, "");
 
-        // Minify the code by removing unnecessary whitespace and line breaks
         let minifiedText = textWithoutComments
           .replace(/\s+/g, " ")
           .replace(/(\s*;\s*)/g, ";")
@@ -64,25 +123,21 @@ export function activate(context: vscode.ExtensionContext) {
           .replace(/(\s*\]\s*)/g, "]")
           .replace(/(\s*,\s*)/g, ",");
 
-        // Apply the changes to the editor
         const edit = new vscode.WorkspaceEdit();
         const fullRange = new vscode.Range(
           document.positionAt(0),
           document.positionAt(fullText.length)
         );
         edit.replace(document.uri, fullRange, minifiedText);
-
         vscode.workspace.applyEdit(edit);
       }
     }
   );
 
-  // Command to create a console log for selected text
   let consoleLogDisposable = vscode.commands.registerCommand(
     "remove-comments.consoleLogSelection",
     () => {
       const editor = vscode.window.activeTextEditor;
-
       if (editor) {
         const document = editor.document;
         const selection = editor.selection;
@@ -102,23 +157,19 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  // Command to remove comments from the selected text
   let removeCommentsFromSelectionDisposable = vscode.commands.registerCommand(
     "remove-comments.removeCommentsFromSelection",
     () => {
       const editor = vscode.window.activeTextEditor;
-
       if (editor) {
         const document = editor.document;
         const selection = editor.selection;
         const selectedText = document.getText(selection);
 
         if (selectedText) {
-          // Regular expressions to match single-line and multi-line comments
           const singleLineComment = /(?<!http:|https:)\/\/.*$/gm;
           const multiLineComment = /\/\*[\s\S]*?\*\//gm;
 
-          // Remove comments from the selected text
           let textWithoutComments = selectedText
             .replace(singleLineComment, "")
             .replace(multiLineComment, "");
@@ -133,7 +184,6 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  // Command to remove comments from all files
   let removeCommentsFromAllFilesDisposable = vscode.commands.registerCommand(
     "remove-comments.removeCommentsFromAllFiles",
     async () => {
@@ -164,16 +214,13 @@ export function activate(context: vscode.ExtensionContext) {
           const document = await vscode.workspace.openTextDocument(file);
           const fullText = document.getText();
 
-          // Regular expressions to match single-line and multi-line comments
           const singleLineComment = /(?<!http:|https:)\/\/.*$/gm;
           const multiLineComment = /\/\*[\s\S]*?\*\//gm;
 
-          // Remove comments
           let textWithoutComments = fullText
             .replace(singleLineComment, "")
             .replace(multiLineComment, "");
 
-          // Apply the changes to the document
           const edit = new vscode.WorkspaceEdit();
           const fullRange = new vscode.Range(
             document.positionAt(0),
@@ -196,7 +243,6 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  // Show Quick Pick menu
   let showQuickPickDisposable = vscode.commands.registerCommand(
     "remove-comments.showQuickPick",
     async () => {
@@ -206,6 +252,7 @@ export function activate(context: vscode.ExtensionContext) {
         { label: "Console Log Selection" },
         { label: "Remove Comments from Selection" },
         { label: "Remove Comments from All Files" },
+        { label: "Convert Style to CSS" }, // Added new option
       ];
 
       const selection = await vscode.window.showQuickPick(options, {
@@ -236,6 +283,50 @@ export function activate(context: vscode.ExtensionContext) {
             "remove-comments.removeCommentsFromAllFiles"
           );
           break;
+        case "Convert Style to CSS": // New case for the added command
+          vscode.commands.executeCommand("extension.convertStyle");
+          break;
+      }
+    }
+  );
+
+  let convertStyleDisposable = vscode.commands.registerCommand(
+    "extension.convertStyle",
+    async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (editor) {
+        const document = editor.document;
+        const selection = editor.selection;
+        const selectedText = document.getText(selection);
+
+        try {
+          const formattedInput = formatCode(selectedText);
+          const cleanedInput = cleanInput(formattedInput);
+          const blocks = preprocessInput(cleanedInput);
+          const cssContents = blocks.map(({ styleObj, wrap, className }) => {
+            const cssContent = convertStyleToCSS(styleObj);
+            let css;
+            if (className) {
+              css = `${className} {\n  ${cssContent}\n}`;
+            } else if (wrap) {
+              css = `{\n  ${cssContent}\n}`;
+            } else {
+              css = cssContent;
+            }
+            return css;
+          });
+          const cssOutput = cssContents.join("\n\n");
+
+          await editor.edit((editBuilder) => {
+            editBuilder.replace(selection, cssOutput);
+          });
+
+          vscode.window.showInformationMessage("Style converted to CSS!");
+        } catch (error) {
+          if (error instanceof Error) {
+            vscode.window.showErrorMessage(error.message);
+          }
+        }
       }
     }
   );
@@ -246,6 +337,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(removeCommentsFromSelectionDisposable);
   context.subscriptions.push(removeCommentsFromAllFilesDisposable);
   context.subscriptions.push(showQuickPickDisposable);
+  context.subscriptions.push(convertStyleDisposable); // Added new disposable
 }
 
 export function deactivate() {}
