@@ -1,40 +1,7 @@
 import * as vscode from "vscode";
 
 export function activate(context: vscode.ExtensionContext) {
-  // Command to show quick pick menu for removing comments
-  let showQuickPickDisposable = vscode.commands.registerCommand(
-    "remove-comments.showQuickPick",
-    async () => {
-      const options = [
-        "Remove Comments from Current File",
-        "Remove Comments from Selected Text",
-        "Remove Comments from All Files",
-      ];
-      const selectedOption = await vscode.window.showQuickPick(options, {
-        placeHolder: "Select an action",
-      });
-
-      switch (selectedOption) {
-        case "Remove Comments from Current File":
-          vscode.commands.executeCommand("remove-comments.removeAllComments");
-          break;
-        case "Remove Comments from Selected Text":
-          vscode.commands.executeCommand(
-            "remove-comments.removeCommentsFromSelection"
-          );
-          break;
-        case "Remove Comments from All Files":
-          vscode.commands.executeCommand(
-            "remove-comments.removeCommentsFromAllFiles"
-          );
-          break;
-        default:
-          break;
-      }
-    }
-  );
-
-  // Existing commands...
+  // Command to remove all comments and minify
   let removeCommentsAndMinifyDisposable = vscode.commands.registerCommand(
     "remove-comments.removeAllComments",
     () => {
@@ -66,6 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  // Command to minify without removing comments
   let minifyDisposable = vscode.commands.registerCommand(
     "remove-comments.minifyFile",
     () => {
@@ -109,6 +77,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  // Command to create a console log for selected text
   let consoleLogDisposable = vscode.commands.registerCommand(
     "remove-comments.consoleLogSelection",
     () => {
@@ -133,6 +102,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  // Command to remove comments from the selected text
   let removeCommentsFromSelectionDisposable = vscode.commands.registerCommand(
     "remove-comments.removeCommentsFromSelection",
     () => {
@@ -163,72 +133,119 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  // Command to remove comments from all files
   let removeCommentsFromAllFilesDisposable = vscode.commands.registerCommand(
     "remove-comments.removeCommentsFromAllFiles",
     async () => {
-      const extensions = [".js", ".ts", ".tsx", ".jsx", ".css"];
       const files = await vscode.workspace.findFiles(
-        `**/*{${extensions.join(",")}}`,
+        "**/*.{js,ts,tsx,jsx,css}",
         "**/node_modules/**"
       );
 
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Removing comments from files...",
-          cancellable: false,
-        },
-        async (progress) => {
-          const totalFiles = files.length;
-          let processedFiles = 0;
+      if (!files.length) {
+        vscode.window.showInformationMessage("No files found");
+        return;
+      }
 
-          const editPromises = files.map(async (file) => {
-            const document = await vscode.workspace.openTextDocument(file);
-            const fullText = document.getText();
+      const progressOptions: vscode.ProgressOptions = {
+        location: vscode.ProgressLocation.Notification,
+        title: "Removing comments from all files...",
+        cancellable: true,
+      };
 
-            // Regular expressions to match single-line and multi-line comments
-            const singleLineComment = /(?<!http:|https:)\/\/.*$/gm;
-            const multiLineComment = /\/\*[\s\S]*?\*\//gm;
+      vscode.window.withProgress(progressOptions, async (progress, token) => {
+        let completed = 0;
 
-            // Remove comments
-            let textWithoutComments = fullText
-              .replace(singleLineComment, "")
-              .replace(multiLineComment, "");
+        for (const file of files) {
+          if (token.isCancellationRequested) {
+            break;
+          }
 
-            // Apply the changes to the document
-            const edit = new vscode.WorkspaceEdit();
-            const fullRange = new vscode.Range(
-              document.positionAt(0),
-              document.positionAt(fullText.length)
-            );
-            edit.replace(document.uri, fullRange, textWithoutComments);
+          const document = await vscode.workspace.openTextDocument(file);
+          const fullText = document.getText();
 
-            await vscode.workspace.applyEdit(edit);
-            await document.save();
+          // Regular expressions to match single-line and multi-line comments
+          const singleLineComment = /(?<!http:|https:)\/\/.*$/gm;
+          const multiLineComment = /\/\*[\s\S]*?\*\//gm;
 
-            processedFiles++;
-            progress.report({
-              increment: (processedFiles / totalFiles) * 100,
-              message: `${processedFiles} of ${totalFiles} files processed`,
-            });
-          });
+          // Remove comments
+          let textWithoutComments = fullText
+            .replace(singleLineComment, "")
+            .replace(multiLineComment, "");
 
-          await Promise.all(editPromises);
-
-          vscode.window.showInformationMessage(
-            "Comments removed from all files."
+          // Apply the changes to the document
+          const edit = new vscode.WorkspaceEdit();
+          const fullRange = new vscode.Range(
+            document.positionAt(0),
+            document.positionAt(fullText.length)
           );
+          edit.replace(document.uri, fullRange, textWithoutComments);
+
+          await vscode.workspace.applyEdit(edit);
+          await document.save();
+
+          completed++;
+          progress.report({
+            message: `${completed}/${files.length} files processed`,
+            increment: (1 / files.length) * 100,
+          });
         }
-      );
+
+        vscode.window.showInformationMessage("Comment removal completed");
+      });
     }
   );
 
-  context.subscriptions.push(showQuickPickDisposable);
+  // Show Quick Pick menu
+  let showQuickPickDisposable = vscode.commands.registerCommand(
+    "remove-comments.showQuickPick",
+    async () => {
+      const options: vscode.QuickPickItem[] = [
+        { label: "Remove All Comments" },
+        { label: "Minify File" },
+        { label: "Console Log Selection" },
+        { label: "Remove Comments from Selection" },
+        { label: "Remove Comments from All Files" },
+      ];
+
+      const selection = await vscode.window.showQuickPick(options, {
+        placeHolder: "Select an action",
+      });
+
+      if (!selection) {
+        return; // No action selected
+      }
+
+      switch (selection.label) {
+        case "Remove All Comments":
+          vscode.commands.executeCommand("remove-comments.removeAllComments");
+          break;
+        case "Minify File":
+          vscode.commands.executeCommand("remove-comments.minifyFile");
+          break;
+        case "Console Log Selection":
+          vscode.commands.executeCommand("remove-comments.consoleLogSelection");
+          break;
+        case "Remove Comments from Selection":
+          vscode.commands.executeCommand(
+            "remove-comments.removeCommentsFromSelection"
+          );
+          break;
+        case "Remove Comments from All Files":
+          vscode.commands.executeCommand(
+            "remove-comments.removeCommentsFromAllFiles"
+          );
+          break;
+      }
+    }
+  );
+
   context.subscriptions.push(removeCommentsAndMinifyDisposable);
   context.subscriptions.push(minifyDisposable);
   context.subscriptions.push(consoleLogDisposable);
   context.subscriptions.push(removeCommentsFromSelectionDisposable);
   context.subscriptions.push(removeCommentsFromAllFilesDisposable);
+  context.subscriptions.push(showQuickPickDisposable);
 }
 
 export function deactivate() {}
